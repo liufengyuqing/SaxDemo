@@ -1,13 +1,20 @@
 package com.yonyou;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.dom4j.Document;
@@ -85,7 +92,10 @@ public class ContextReplace {
 		public boolean accept(File pathname) {
 			// 只处理：目录并且非target下目录 或是 pom.xml文件
 			if ((pathname.isDirectory() && !pathname.getName().endsWith("target"))
-					|| (pathname.isFile() && pathname.getName().endsWith("pom.xml"))) {
+					//|| (pathname.isDirectory() && !pathname.getName().endsWith("node_modules"))
+					|| (pathname.isFile() && pathname.getName().endsWith("pom.xml")))
+					//|| (pathname.isFile() && pathname.getName().endsWith("package.json"))) 
+					{
 				return true;
 			} else {
 				return false;
@@ -104,6 +114,8 @@ public class ContextReplace {
 			}
 			// 处理文件
 			else {
+				
+				
 				String message = " 找到的源文件：\t" + subFile.getAbsolutePath();
 				System.out.println(message);
 				System.out.println("---------------------------");
@@ -257,12 +269,130 @@ public class ContextReplace {
 		infile.delete();
 		outfile.renameTo(infile);
 	}
+	
+	/**
+	 *  处理前端——icop-security-frontend中的package.json文件中version版本
+	 *  
+	 * @param infilename
+	 * @return
+	 */
 
-	/*public static void main(String[] args) {
+	public String fingVersion(String infilename) {
+
+		File infile = new File(infilename);
+		// read file content from file
+		//线程安全的
+		//StringBuilder线程不安全的
+		StringBuffer sb = new StringBuffer("");
+
+		try {
+			FileReader reader = new FileReader(infile);
+			BufferedReader br = new BufferedReader(reader);
+			String str = null;
+			//按行读入每一行
+			while ((str = br.readLine()) != null) {
+				sb.append(str + "\r\n");
+				//System.out.println("每一行的字符：" + str);
+			}
+			br.close();
+			reader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		//正则表达式的高级用法
+
+		String pattern = "(?<=(\"version\"):.?\")[\\d.]*(?=\")";
+
+		Pattern r = Pattern.compile(pattern);
+		Matcher m = r.matcher(sb);
+		String matchedStr = "";
+		while (m.find()) {
+			matchedStr = m.group();
+			if (matchedStr != null && matchedStr.length() > 0)
+				System.out.println("找到当前版本:" + matchedStr);
+		}
+		return matchedStr;
+	}
+
+	public void replaceFrontend(String infilename,String postVersion) {
+		File infile = new File(infilename);
+
+		try {
+			// read file content from file
+			StringBuffer sb = new StringBuffer("");
+
+			FileReader reader = new FileReader(infile);
+			BufferedReader br = new BufferedReader(reader);
+
+			String str = null;
+
+			while ((str = br.readLine()) != null) {
+				sb.append(str + "\r\n");
+				//System.out.println("每一行的字符："+str);
+			}
+			br.close();
+			reader.close();
+
+			String pattern = "(?<=(\"version\"):.?\")[\\d.]*(?=\")";
+
+			Pattern r = Pattern.compile(pattern);
+			Matcher m = r.matcher(sb);
+			while (m.find()) {
+				String matchedStr = m.group();
+				if (matchedStr != null && matchedStr.length() > 0)
+					System.out.println("当前的版本:" + matchedStr);
+			}
+
+			// write string to file
+			FileWriter writer = new FileWriter(infile);
+			BufferedWriter bw = new BufferedWriter(writer);
+			bw.write(m.replaceAll(postVersion));
+			// bw.write(sb.toString());
+			
+			bw.close();
+			writer.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		/*
+		 * // 输出格式 缩进格式 OutputFormat format = OutputFormat.createPrettyPrint();
+		 * 
+		 * // 输入流 BufferedReader in = new BufferedReader(new
+		 * InputStreamReader(new FileInputStream(infile), "utf-8")); // 临时文件
+		 * File outfile = new File(infile + ".tmp"); // 输出流 PrintWriter out =
+		 * new PrintWriter( new BufferedWriter(new OutputStreamWriter(new
+		 * FileOutputStream(outfile), "utf-8")));
+		 * 
+		 * String reading; StringBuilder stringBuilder = new StringBuilder();
+		 * while ((reading = in.readLine()) != null) {
+		 * System.out.println(reading); //
+		 * stringBuilder.append(reading).append("\r\n"); } String str =
+		 * stringBuilder.toString(); // System.out.println(str);
+		 * System.out.println("----");
+		 * 
+		 * String pattern = "(?<=(\"version\"):.?\")[\\d.]*(?=\")";
+		 * 
+		 * Pattern r = Pattern.compile(pattern); Matcher m = r.matcher(str);
+		 * while (m.find()) { String matchedStr = m.group(); if (matchedStr !=
+		 * null && matchedStr.length() > 0) System.out.println("come here:" +
+		 * matchedStr); } System.out.println(m.replaceAll("1.5.1"));
+		 * out.println(m.replaceAll("1.5.1")); // out.format(format, null);
+		 * out.close(); in.close(); infile.delete(); outfile.renameTo(infile);
+		 */
+	}
+	
+	
+
+/*	public static void main(String[] args) {
+		
+		String srcDir = "E:\\Program Files\\git\\icop-lzw-frontend\\package.json";
 		File srcFile = new File(srcDir);
+		
 		ContextReplace contextReplace = new ContextReplace();
-		contextReplace.readDir(srcFile, "", "liuzhiwei");
-		System.out.println(contextReplace.getFileMsg());
-	}*/
-
+		
+		contextReplace.replaceFrontend(srcDir,"1.5.02");
+	}
+*/
 }

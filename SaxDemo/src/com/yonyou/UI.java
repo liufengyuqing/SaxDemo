@@ -18,6 +18,8 @@ import javax.swing.JFileChooser;
 
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.awt.event.ActionEvent;
 import javax.swing.JTextField;
@@ -38,7 +40,7 @@ public class UI extends JFrame {
 	private JTextField textField_2;
 	// 逻辑处理对象
 	private ContextReplace contextReplace = new ContextReplace();
-	//文件选择对象
+	// 文件选择对象
 	private JFileChooser chooser = new JFileChooser();
 	private JTextArea textArea;
 	private JMenu mnNewMenu;
@@ -46,7 +48,7 @@ public class UI extends JFrame {
 	private JMenuItem mntmNewMenuItem;
 	private JMenuItem mntmNewMenuItem_1;
 	private JLabel lblCreateByLiuzh;
-	//private JComboBox<String> comboBox1;
+	// private JComboBox<String> comboBox1;
 	private MultiSelectComboBox<String> comboBox = new MultiSelectComboBox<>();
 
 	/**
@@ -250,28 +252,49 @@ public class UI extends JFrame {
 		int result = chooser.showOpenDialog(this);
 		if (result == JFileChooser.APPROVE_OPTION) {
 			File file = chooser.getSelectedFile();
+			//获取选择目录的绝对路径
 			String filepath = file.getAbsolutePath();
+
 			textField.setText(filepath);// 将文件路径设到JTextField
 			File srcFile = new File(filepath);
-			contextReplace.readDir(srcFile, null, "1");
-			textField_1.setText(contextReplace.getDversion());
-			textArea.setText(contextReplace.getFileMsg());
-			contextReplace.setResultMsg("");
-			contextReplace.setFileMsg("");
 
-			int size = contextReplace.getMatched().size();
-			contextReplace.getMatched().toArray(new String[size]);
-			comboBox.removeAllItems();
-			for (String s : contextReplace.getMatched()) {
-				comboBox.addItem(s);
+			//判断修改的式前端文件还是后端文件
+			if (filepath.endsWith("frontend")) {
+				String packageFilePath = filepath + "\\package.json";
+				System.out.println("----frontend----" + packageFilePath);
+				//String from = "\"version\": \"1.5.01\",";
+				//String to = "\"version\": \"1.5.02\",";
+				String versionValue = contextReplace.fingVersion(packageFilePath);
+				
+				textField_1.setText(versionValue);
+				textArea.setText("找到的源文件："+packageFilePath+"\n"
+						+ "version:"+versionValue);
+				
+				//String postVersion = "";
+				//contextReplace.replaceFrontend(packageFilePath, postVersion);
+
+			} else {
+
+				contextReplace.readDir(srcFile, null, "1");
+				textField_1.setText(contextReplace.getDversion());
+				textArea.setText(contextReplace.getFileMsg());
+				contextReplace.setResultMsg("");
+				contextReplace.setFileMsg("");
+
+				int size = contextReplace.getMatched().size();
+				contextReplace.getMatched().toArray(new String[size]);
+				comboBox.removeAllItems();
+				for (String s : contextReplace.getMatched()) {
+					comboBox.addItem(s);
+				}
+				String[] str = filepath.split("\\\\");
+				String string = str[str.length - 1];
+				comboBox.setSelectedItem(string);
+
+				// System.out.println(contextReplace.getMatched().size());
+
+				// System.out.println(filepath);
 			}
-			String [] str = filepath.split("\\\\");
-			String string = str[str.length-1];
-			comboBox.setSelectedItem(string);
-
-			//System.out.println(contextReplace.getMatched().size());
-
-			// System.out.println(filepath);
 		}
 	}
 
@@ -286,17 +309,25 @@ public class UI extends JFrame {
 			if (postStr.equals("")) {
 				showMessage("请输入版本号！！！");
 			} else {
-				if (comboBox.getSelectedItemsString().equals("")) {
-					showMessage("请选择模块！！！");
+				if (filepath.endsWith("frontend")) {
+					contextReplace.replaceFrontend( filepath + "\\package.json", postStr);
+					textArea.setText("修改成功1!!");
+					
+
 				} else {
-					List<String> list = comboBox.getSelectedItems();
-					contextReplace.readDir(srcFile, list, postStr);
-					textField_1.setText(contextReplace.getDversion());
-					
-					textArea.setText(contextReplace.getResultMsg());
-					contextReplace.setFileMsg("");
-					contextReplace.setResultMsg("");
-					
+
+					if (comboBox.getSelectedItemsString().equals("")) {
+						showMessage("请选择模块！！！");
+					} else {
+						List<String> list = comboBox.getSelectedItems();
+						contextReplace.readDir(srcFile, list, postStr);
+						textField_1.setText(contextReplace.getDversion());
+
+						textArea.setText(contextReplace.getResultMsg());
+						contextReplace.setFileMsg("");
+						contextReplace.setResultMsg("");
+
+					}
 				}
 			}
 		}
