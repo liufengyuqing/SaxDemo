@@ -116,12 +116,13 @@ public class ContextReplace {
 			else {
 				
 				
-				String message = " 找到的源文件：\t" + subFile.getAbsolutePath();
+				String message = "\n------------------------------------------------------------------------\n"
+						+ " 找到的源文件：\t" + subFile.getAbsolutePath()+"\n";
 				System.out.println(message);
 				System.out.println("---------------------------");
 				
-				fileMsg = fileMsg+message+"\n";
-				fileMsg = fileMsg + "---------------------------\n";
+				fileMsg = fileMsg+message;
+			//	fileMsg = fileMsg + "---------------------------\n";
 				
 				resultMsg = resultMsg+message+"\n";
 				resultMsg = resultMsg + "---------------------------\n";
@@ -216,7 +217,7 @@ public class ContextReplace {
 
 				if (groupIdList.contains(groupIdStr) && match(artifactIdList1,artifactIdStr)) {
 					if (postStr.equals("1")) {
-						String search =groupIdStr + "----" + artifactIdStr + "------当前版本：" + versionStr; 
+						String search ="groupId: "+ groupIdStr + "----" +"artifactId: " +artifactIdStr + "------当前版本：" + versionStr; 
 						System.out.println(search);
 						fileMsg+=search+"\n";
 						setDversion(versionStr);
@@ -224,7 +225,7 @@ public class ContextReplace {
 						version.setText(postStr);
 						setDversion(postStr);
 						//String result = " 修改后： " + version.getName() + " ：" + version.getText();
-						String result = groupIdStr + "----" + artifactIdStr + "------修改后：" + version.getText();
+						String result = "groupId: "+groupIdStr + "----" + "artifactId: "+artifactIdStr + "------修改后：" + version.getText();
 						resultMsg+=result+"\n";
 						System.out.println(result);
 
